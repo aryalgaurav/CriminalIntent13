@@ -13,7 +13,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +32,8 @@ public class CrimeListFragment extends Fragment {
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
     private boolean mSubtitleVisible;
+    private Button mAddCrimeButton;
+    private RelativeLayout mNoCrimeLayout;
     private int position;
 
     /**
@@ -52,6 +56,9 @@ public class CrimeListFragment extends Fragment {
         if (savedInstanceState != null) {
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
         }
+        mNoCrimeLayout = (RelativeLayout) view.findViewById(R.id.no_crime_view);
+        mAddCrimeButton = (Button) view.findViewById(R.id.new_crime_button);
+
 
         updateUI();
 
@@ -91,10 +98,7 @@ public class CrimeListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_item_new_crime:
-                Crime crime = new Crime();
-                CrimeLab.get(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
-                startActivity(intent);
+                addNewCrime();
                 return true;
             case R.id.menu_item_show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;
@@ -104,6 +108,13 @@ public class CrimeListFragment extends Fragment {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void addNewCrime() {
+        Crime crime = new Crime();
+        CrimeLab.get(getActivity()).addCrime(crime);
+        Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
+        startActivity(intent);
     }
 
     private void updateSubtitle() {
@@ -124,15 +135,29 @@ public class CrimeListFragment extends Fragment {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
 
+
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         }
         else {
-            mAdapter.notifyItemChanged(position);
-            //Toast.makeText(getActivity(), "Updated position # " + position, Toast.LENGTH_SHORT).show();
+            //When the user deletes a crime, the entire data-set is changed. So, notifyItemChanged will not work in that case.
+            mAdapter.notifyDataSetChanged();
         }
         updateSubtitle();
+
+        if (crimes.size() == 0) {
+            mNoCrimeLayout.setVisibility(View.VISIBLE);
+            mAddCrimeButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    addNewCrime();
+                }
+            });
+        }
+        else {
+            mNoCrimeLayout.setVisibility(View.GONE);
+        }
     }
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -164,8 +189,6 @@ public class CrimeListFragment extends Fragment {
             position = getAdapterPosition();
             startActivity(intent);
         }
-
-
     }
 
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {

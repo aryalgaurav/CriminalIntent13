@@ -15,6 +15,8 @@ import java.util.UUID;
 
 /**
  * Created by Gaurav on 8/22/2016.
+ *
+ * CrimePagerActivity will createa and manage the ViewPager.
  */
 public class CrimePagerActivity extends AppCompatActivity {
 
